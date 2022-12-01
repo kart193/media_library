@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" href="{{ url_for('static', filename= 'css/style.css') }}">
+    <meta charset="UTF-8">
+    <title>FlaskBlog</title>
+</head>
+<body>
+    <h1> Welcome to Media Library </h1>
+    <h4> Upload files </h4>
+    <form method="POST" action="/upload" enctype="multipart/form-data">
+        <input type="file" name="file" multiple accept="audio/*, video/*, .gam, .sav"/>
+        <input type="submit" value="Upload" onclick="popUp()"/>
+    </form>
+    <br>
+    <div class="container" >
+        <form action="/dashboard/all">
+            <input type="submit" value="Home" />
+        </form>
+        <form action="/dashboard/Video">
+            <input type="submit" value="Video" />
+        </form>
+        <form action="/dashboard/Game">
+            <input type="submit" value="Game" />
+        </form>
+        <form action="/dashboard/Audio">
+            <input type="submit" value="Audio" />
+        </form>
+    </div>
+
+    <h4> My Media files </h4>
+    <form method="POST" action="/delete">
+        <div>
+            <table id=myTable class="tasks table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Select</th>
+                        <th>Name</th>
+                        <th>Type</th>
+                        <th>Update</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for file in files %}
+                    <tr id="row{{file.id}}">
+                        <td>
+                            <input type="checkbox" name="mycheckbox" id="checkId" value="{{file.id}}" />
+                        </td>
+                        <td id="file{{file.id}}">{{file.title}}</td>
+                        <td>{{file.type}}</td>
+                        <td>
+                            <input type="button" value="Del" onclick="deleteRow(this)">
+                            <input id="{{file.id}}" type="button" value="Edit" onclick="editRow(this.id)">
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <input type="submit" value="Delete Selected" class="btn btn-primary" id="delAll" disabled>
+        </div>
+    </form>
+    <script>
+        var checker = document.getElementById('checkId');
+        var sendbtn = document.getElementById('delAll');
+        checker.onchange = function() {
+            sendbtn.disabled = !this.checked;
+        };
+
+
+        function deleteRow(r) {
+            var i = r.parentNode.parentNode.rowIndex;
+            table = document.getElementById("myTable")
+            var val = table.rows[i].cells[1].innerHTML;
+            fetch('http://127.0.0.1:5004/delete_row/' + val)
+                .then(response => {
+                    console.log(response);
+                    return;
+                })
+            table.deleteRow(i);
+        }
+
+        function editRow(val) {
+            var file_name = document.getElementById('file' + val).innerText;
+            document.getElementById('file' + val).innerHTML = "<input id='file_edit" + val + "' type='text' value='" + file_name + "'/>";
+            document.getElementById(val).disabled = true;
+
+            var row = document.getElementById("row" + val);
+            var x = row.insertCell(4);
+            x.innerHTML = '<input id="ok' + val + '" type="button" value="OK" onClick="edited(' + val + ')"/>';
+        }
+
+        function edited(val) {
+            const container = document.getElementById("ok" + val)
+            container.remove()
+            document.getElementById(val).disabled = false;
+            var file_name = document.getElementById('file_edit' + val).value;
+            document.getElementById('file' + val).innerHTML = "<td id=file" + val + ">" + file_name + "</td>";
+            fetch('http://127.0.0.1:5004/update_row/' + val + '/' + file_name)
+
+        }
+    </script>
+    </body>
+</html>
